@@ -1,6 +1,5 @@
 /**
  * VALVET — Página: Painel Administrativo (/sys/control-panel)
- * Métricas, geração de códigos de acesso e monitor de logs de segurança.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -10,7 +9,6 @@ import StatusBar from '../components/StatusBar'
 
 const API = import.meta.env.VITE_API_URL || ''
 
-// ── Métricas ──────────────────────────────────────────────────────────────────
 function MetricCard({ label, value, sub, color }) {
   return (
     <div style={{
@@ -32,7 +30,6 @@ function MetricCard({ label, value, sub, color }) {
   )
 }
 
-// ── Modal de código gerado ────────────────────────────────────────────────────
 function CodeModal({ code, onClose }) {
   const [copied, setCopied] = useState(false)
   const copy = () => {
@@ -79,7 +76,6 @@ function CodeModal({ code, onClose }) {
   )
 }
 
-// ── Tabela de Códigos ─────────────────────────────────────────────────────────
 function CodesPanel({ authFetch }) {
   const [codes, setCodes]             = useState([])
   const [loading, setLoading]         = useState(false)
@@ -93,7 +89,7 @@ function CodesPanel({ authFetch }) {
       const res  = await authFetch('/api/v1/admin/codes')
       const data = await res.json()
       setCodes(data.codes || [])
-    } catch { /* silencioso */ }
+    } catch { }
     finally { setLoading(false) }
   }, [authFetch])
 
@@ -106,7 +102,7 @@ function CodesPanel({ authFetch }) {
       const data = await res.json()
       setNewCode(data)
       await load()
-    } catch { /* silencioso */ }
+    } catch { }
     finally { setGenerating(false) }
   }
 
@@ -115,7 +111,7 @@ function CodesPanel({ authFetch }) {
       await authFetch(`/api/v1/admin/codes/${id}`, { method: 'DELETE' })
       setConfirmRevokeId(null)
       await load()
-    } catch { /* silencioso */ }
+    } catch { }
   }
 
   const badgeClass = (s) => `badge badge-${s.toLowerCase()}`
@@ -180,12 +176,11 @@ function CodesPanel({ authFetch }) {
   )
 }
 
-// ── Tabela de Logs ────────────────────────────────────────────────────────────
 function LogsPanel({ authFetch }) {
-  const [logs, setLogs]           = useState([])
+  const [logs, setLogs]             = useState([])
   const [pagination, setPagination] = useState(null)
-  const [filters, setFilters]     = useState({ status: '', search: '', from: '', to: '', page: 1 })
-  const [loading, setLoading]     = useState(false)
+  const [filters, setFilters]       = useState({ status: '', search: '', from: '', to: '', page: 1 })
+  const [loading, setLoading]       = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -202,7 +197,7 @@ function LogsPanel({ authFetch }) {
       const data = await res.json()
       setLogs(data.logs || [])
       setPagination(data.pagination)
-    } catch { /* silencioso */ }
+    } catch { }
     finally { setLoading(false) }
   }, [authFetch, filters])
 
@@ -286,13 +281,13 @@ function LogsPanel({ authFetch }) {
         </div>
       )}
 
-      {pagination && pagination.totalPages > 1 && (
+      {pagination && pagination.pages > 1 && (
         <div style={{ padding: '12px 20px', display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
           <button onClick={() => setFilters((p) => ({ ...p, page: p.page - 1 }))} disabled={filters.page <= 1} style={{ background: 'transparent', border: '1px solid rgba(157,78,221,0.3)', color: 'var(--neon-purple)', padding: '4px 12px', fontFamily: 'JetBrains Mono', fontSize: '11px', opacity: filters.page <= 1 ? 0.4 : 1 }}>
             ← Anterior
           </button>
-          <span>{filters.page} / {pagination.totalPages}</span>
-          <button onClick={() => setFilters((p) => ({ ...p, page: p.page + 1 }))} disabled={filters.page >= pagination.totalPages} style={{ background: 'transparent', border: '1px solid rgba(157,78,221,0.3)', color: 'var(--neon-purple)', padding: '4px 12px', fontFamily: 'JetBrains Mono', fontSize: '11px', opacity: filters.page >= pagination.totalPages ? 0.4 : 1 }}>
+          <span>{filters.page} / {pagination.pages}</span>
+          <button onClick={() => setFilters((p) => ({ ...p, page: p.page + 1 }))} disabled={filters.page >= pagination.pages} style={{ background: 'transparent', border: '1px solid rgba(157,78,221,0.3)', color: 'var(--neon-purple)', padding: '4px 12px', fontFamily: 'JetBrains Mono', fontSize: '11px', opacity: filters.page >= pagination.pages ? 0.4 : 1 }}>
             Próximo →
           </button>
         </div>
@@ -301,7 +296,6 @@ function LogsPanel({ authFetch }) {
   )
 }
 
-// ── Admin Page ────────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const { user, authFetch, logout } = useAuth()
   const navigate = useNavigate()
@@ -321,7 +315,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', paddingBottom: 40 }}>
-      {/* Top nav */}
       <div style={{
         borderBottom: '1px solid rgba(157,78,221,0.15)',
         padding: '12px 24px',
@@ -348,25 +341,21 @@ export default function AdminPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 0' }}>
-        {/* Métricas */}
         {metrics && (
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
-            <MetricCard label="Usuários" value={metrics.users.total} color="157,78,221" />
-            <MetricCard label="Códigos Ativos" value={metrics.codes.active} color="0,245,255" />
-            <MetricCard label="Códigos Usados" value={metrics.codes.used} sub={`${metrics.codes.expired} expirados`} color="100,116,139" />
-            <MetricCard label="Logins 24h" value={metrics.logins24h.total} sub={`${metrics.logins24h.success} sucesso / ${metrics.logins24h.failure} falha`} color="0,245,255" />
+            <MetricCard label="Usuários" value={metrics.totalUsers} color="157,78,221" />
+            <MetricCard label="Códigos Ativos" value={metrics.codes.ativos} color="0,245,255" />
+            <MetricCard label="Códigos Usados" value={metrics.codes.usados} sub={`${metrics.codes.expirados} expirados`} color="100,116,139" />
+            <MetricCard label="Logins 24h" value={metrics.logins24h.total} sub={`${metrics.logins24h.sucessos} sucesso / ${metrics.logins24h.falhas} falha`} color="0,245,255" />
             <MetricCard
               label="Taxa de Falha"
-              value={`${metrics.logins24h.failureRate}%`}
-              color={metrics.logins24h.failureRate > 30 ? '255,45,120' : '0,245,255'}
+              value={metrics.logins24h.failRate}
+              color={parseFloat(metrics.logins24h.failRate) > 30 ? '255,45,120' : '0,245,255'}
             />
           </div>
         )}
 
-        {/* Códigos de Acesso */}
         <CodesPanel authFetch={authFetch} />
-
-        {/* Logs */}
         <LogsPanel authFetch={authFetch} />
       </div>
 
